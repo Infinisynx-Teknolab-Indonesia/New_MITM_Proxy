@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# App runtime (jangan di-commit: CA pribadi & setting lokal)
+ca/
+settings.json
+*.log
+
+# Profil browser sementara
+mitm_sess_*/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

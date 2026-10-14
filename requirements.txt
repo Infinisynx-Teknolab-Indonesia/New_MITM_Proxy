@@ -1,0 +1,13 @@
+# Wajib
+cryptography>=42.0
+
+# Opsional — tampilkan body terkompresi Brotli / Zstandard secara utuh
+brotli>=1.1.0
+zstandard>=0.22.0
+
+# Opsional — dashboard web alternatif (python proxy.py)
+flask>=3.0
+
+# Opsional — plugin OCR (butuh juga program Tesseract OCR, bukan paket pip)
+# pillow>=10.0
+# pytesseract>=0.3
