@@ -24,3 +24,7 @@ mitm_sess_*/
 Thumbs.db
 .idea/
 .vscode/
+
+# PyInstaller
+*.spec
+MiniMITMProxy/

@@ -3,7 +3,8 @@ import json
 import os
 import threading
 
-_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json")
+from paths import BASE_DIR
+_PATH = os.path.join(BASE_DIR, "settings.json")
 _lock = threading.Lock()
 
 _DEFAULT = {

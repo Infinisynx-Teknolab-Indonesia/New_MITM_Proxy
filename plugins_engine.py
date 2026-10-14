@@ -72,7 +72,8 @@ def ensure_requirements(plugin, log=lambda s: None):
     except Exception as e:
         return False, str(e)
 
-PLUGINS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
+from paths import BASE_DIR
+PLUGINS_DIR = os.path.join(BASE_DIR, "plugins")
 
 
 # ------------------------------ context ------------------------------

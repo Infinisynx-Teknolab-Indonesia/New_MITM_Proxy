@@ -1041,10 +1041,10 @@ class App:
         rightf = ttk.Frame(split)
         cols = ("n", "payload", "status", "len", "ms")
         s["results"] = ttk.Treeview(rightf, columns=cols, show="headings", height=10)
-        for c, t, w, a in (("n", "#", 36, "e"), ("payload", "Payload", 150, "w"),
+        for c, ttl, w, a in (("n", "#", 36, "e"), ("payload", "Payload", 150, "w"),
                            ("status", "Status", 56, "center"), ("len", "Len", 60, "e"),
                            ("ms", "ms", 50, "e")):
-            s["results"].heading(c, text=t); s["results"].column(c, width=w, anchor=a)
+            s["results"].heading(c, text=ttl); s["results"].column(c, width=w, anchor=a)
         s["results"].pack(fill="both", expand=True)
         s["results"].bind("<<TreeviewSelect>>", lambda e, s=s: self._intruder_show(s))
         s["resp"] = scrolledtext.ScrolledText(rightf, height=9, wrap="none", font=self.mono, state="disabled")
@@ -1192,10 +1192,10 @@ class App:
         lf = ttk.Frame(split)
         cols = ("n", "method", "url", "status", "len")
         self.air_table = ttk.Treeview(lf, columns=cols, show="headings", height=12)
-        for c, t, w, a in (("n", "#", 36, "e"), ("method", "Method", 60, "w"),
+        for c, ttl, w, a in (("n", "#", 36, "e"), ("method", "Method", 60, "w"),
                            ("url", "URL", 320, "w"), ("status", "Status", 56, "center"),
                            ("len", "Len", 60, "e")):
-            self.air_table.heading(c, text=t); self.air_table.column(c, width=w, anchor=a)
+            self.air_table.heading(c, text=ttl); self.air_table.column(c, width=w, anchor=a)
         self.air_table.pack(fill="both", expand=True)
         self.air_table.bind("<<TreeviewSelect>>", self._airunner_show)
         split.add(lf, weight=1)
@@ -1292,9 +1292,9 @@ class App:
 
         cols = ("status", "name", "type", "desc")
         self.pg_table = ttk.Treeview(tab, columns=cols, show="headings", height=12)
-        for c, t, w, a in (("status", "Aktif", 60, "center"), ("name", "Nama", 200, "w"),
+        for c, ttl, w, a in (("status", "Aktif", 60, "center"), ("name", "Nama", 200, "w"),
                            ("type", "Tipe", 90, "center"), ("desc", "Deskripsi", 360, "w")):
-            self.pg_table.heading(c, text=t); self.pg_table.column(c, width=w, anchor=a)
+            self.pg_table.heading(c, text=ttl); self.pg_table.column(c, width=w, anchor=a)
         self.pg_table.pack(fill="both", expand=True, pady=(8, 6))
         self.pg_table.bind("<Double-1>", lambda e: self._pg_toggle())
         ttk.Label(tab, foreground="#666", wraplength=640, text=(
@@ -1988,7 +1988,25 @@ def sys_is_mac():
     return platform.system() == "Darwin"
 
 
+def _seed_plugins():
+    """Saat .exe: salin plugin bawaan ke folder plugins/ di sebelah .exe (sekali)."""
+    import shutil
+    import paths
+    dst = os.path.join(paths.BASE_DIR, "plugins")
+    src = os.path.join(paths.RESOURCE_DIR, "plugins")
+    try:
+        os.makedirs(dst, exist_ok=True)
+        if os.path.abspath(src) != os.path.abspath(dst) and os.path.isdir(src):
+            for fn in os.listdir(src):
+                d = os.path.join(dst, fn)
+                if fn.endswith(".py") and not os.path.exists(d):
+                    shutil.copy2(os.path.join(src, fn), d)
+    except Exception:
+        pass
+
+
 def main():
+    _seed_plugins()
     ca_mod.generate_ca()
     plugins.load_all()
     cfg = config.get()

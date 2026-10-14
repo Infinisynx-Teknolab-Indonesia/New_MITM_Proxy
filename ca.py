@@ -7,8 +7,8 @@ import datetime
 import os
 import shutil
 
-BASE = os.path.dirname(os.path.abspath(__file__))
-CA_DIR = os.path.join(BASE, "ca")
+from paths import BASE_DIR
+CA_DIR = os.path.join(BASE_DIR, "ca")
 CA_CERT = os.path.join(CA_DIR, "ca.crt")
 CA_KEY = os.path.join(CA_DIR, "ca.key")
 CERT_CACHE = os.path.join(CA_DIR, "certs")
