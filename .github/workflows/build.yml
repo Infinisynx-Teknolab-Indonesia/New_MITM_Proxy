@@ -1,5 +1,7 @@
 name: Build Windows EXE
 
+# Jalan otomatis saat kamu push tag versi (mis. v1.0.0),
+# atau bisa dijalankan manual dari tab Actions.
 on:
   push:
     tags:
@@ -30,13 +32,13 @@ jobs:
       - name: Build EXE
         run: pyinstaller --noconfirm --onefile --windowed --name MiniMITMProxy --add-data "plugins;plugins" app.py
 
-      - name: Upload artifact
+      - name: Upload artifact (selalu, walau bukan tag)
         uses: actions/upload-artifact@v4
         with:
           name: MiniMITMProxy
           path: dist/MiniMITMProxy.exe
 
-      - name: Create Release
+      - name: Create GitHub Release (hanya saat push tag)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:

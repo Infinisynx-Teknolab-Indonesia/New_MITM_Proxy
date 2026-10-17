@@ -22,6 +22,20 @@ def _lazy_imports():
     return x509, NameOID, hashes, serialization, rsa
 
 
+def ca_pem():
+    """Isi sertifikat CA dalam format PEM (bytes)."""
+    generate_ca()
+    with open(CA_CERT, "rb") as f:
+        return f.read()
+
+
+def ca_der():
+    """Isi sertifikat CA dalam format DER (.cer) — berguna untuk iOS."""
+    x509, _n, _h, serialization, _r = _lazy_imports()
+    cert = x509.load_pem_x509_certificate(ca_pem())
+    return cert.public_bytes(serialization.Encoding.DER)
+
+
 def _now():
     return datetime.datetime.now(datetime.timezone.utc)
 

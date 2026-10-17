@@ -19,7 +19,72 @@ import interceptor
 import history_log
 import cookie_jar as cookies
 from plugins_engine import manager as plugins
-from ca import generate_ca, cert_for_host
+from ca import generate_ca, cert_for_host, ca_pem, ca_der
+
+# Host "ajaib" untuk unduh sertifikat (mirip http://burp pada Burp Suite).
+# Buka salah satu ini dari browser HP yang sudah di-set proxy.
+MAGIC_HOSTS = {"minimitm", "minimitm.it", "cert", "cert.minimitm"}
+
+_CERT_PAGE = """<!doctype html><html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install Sertifikat - Mini MITM Proxy</title>
+<style>
+ body{font-family:system-ui,Arial;margin:0;background:#0f1115;color:#e6e6e6;padding:24px}
+ .card{max-width:560px;margin:0 auto;background:#161a22;border:1px solid #2a2f3a;border-radius:14px;padding:22px}
+ h1{font-size:20px;margin:0 0 6px} h2{font-size:16px;margin:18px 0 6px;color:#7fd1ff}
+ a.btn{display:inline-block;background:#0067c0;color:#fff;text-decoration:none;padding:12px 16px;border-radius:10px;margin:6px 8px 6px 0;font-weight:600}
+ ol{padding-left:20px;line-height:1.6} code{background:#0f1115;padding:1px 5px;border-radius:5px}
+ .muted{color:#9aa4b2;font-size:13px}
+</style></head><body><div class="card">
+<h1>Mini MITM Proxy — Install Sertifikat</h1>
+<p class="muted">Pasang CA ini supaya HTTPS dari HP bisa dibaca proxy. Hanya untuk perangkat & trafik milikmu sendiri.</p>
+<p><a class="btn" href="/cert.pem">Download CA (Android / .pem)</a>
+<a class="btn" href="/cert.cer">Download CA (iOS / .cer)</a></p>
+<h2>Android</h2>
+<ol>
+<li>Tap tombol <b>Android (.pem)</b> di atas.</li>
+<li>Settings &rarr; Security &rarr; <b>Install a certificate</b> &rarr; <b>CA certificate</b> &rarr; pilih file tadi.</li>
+<li>Untuk app sendiri (Android 7+): aktifkan user-CA via <code>network_security_config</code> saat debug.</li>
+</ol>
+<h2>iOS</h2>
+<ol>
+<li>Tap tombol <b>iOS (.cer)</b> &rarr; muncul "Profile Downloaded".</li>
+<li>Settings &rarr; General &rarr; <b>VPN &amp; Device Management</b> &rarr; install profilnya.</li>
+<li>Settings &rarr; General &rarr; About &rarr; <b>Certificate Trust Settings</b> &rarr; aktifkan trust penuh.</li>
+</ol>
+<p class="muted">Pastikan HP memakai proxy ini (Wi-Fi &rarr; Proxy manual &rarr; IP laptop : port proxy).</p>
+</div></body></html>"""
+
+
+def _http_send(sock, status, headers, body):
+    head = f"HTTP/1.1 {status}\r\n" + "".join(f"{k}: {v}\r\n" for k, v in headers)
+    head += f"Content-Length: {len(body)}\r\nConnection: close\r\n\r\n"
+    try:
+        sock.sendall(head.encode("latin1") + body)
+    except OSError:
+        pass
+
+
+def _serve_cert(sock, path):
+    """Sajikan halaman & file sertifikat CA untuk host ajaib."""
+    try:
+        p = path.split("?", 1)[0]
+        if p in ("/cert.pem", "/ca.crt", "/ca.pem"):
+            _http_send(sock, "200 OK",
+                       [("Content-Type", "application/x-x509-ca-cert"),
+                        ("Content-Disposition", 'attachment; filename="mitmproxy-ca.crt"')],
+                       ca_pem())
+        elif p in ("/cert.cer", "/cert.der", "/ca.cer"):
+            _http_send(sock, "200 OK",
+                       [("Content-Type", "application/x-x509-ca-cert"),
+                        ("Content-Disposition", 'attachment; filename="mitmproxy-ca.cer"')],
+                       ca_der())
+        else:
+            _http_send(sock, "200 OK",
+                       [("Content-Type", "text/html; charset=utf-8")],
+                       _CERT_PAGE.encode("utf-8"))
+    except Exception as e:  # noqa
+        _http_send(sock, "500 Error", [("Content-Type", "text/plain")], str(e).encode())
 
 UI_PORT = 8081   # dashboard web (opsional, dipakai main())
 
@@ -269,6 +334,11 @@ def serve(sock, tls_host=None, tls_port=None):
             scheme, host, port = "http", u.hostname, (u.port or 80)
             path = (u.path or "/") + (("?" + u.query) if u.query else "")
         body = read_body(rfile, hd, method=method)
+
+        # ====== Host ajaib: sajikan halaman unduh sertifikat CA ======
+        if scheme == "http" and (host or "").lower() in MAGIC_HOSTS:
+            _serve_cert(sock, path)
+            break
 
         # ====== PLUGIN on_request (otomatis) ======
         fields = {"method": method, "scheme": scheme, "host": host, "port": port, "path": path}
